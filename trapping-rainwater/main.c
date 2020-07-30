@@ -1,45 +1,54 @@
 #include <stdio.h>
-#include <stdbool.h>
 
-int maxTrapValue(int *height, int heightSize, int pos)
+// Find right max position
+int findRightMaxPos(int *height, int heightSize, int trapPos)
 {
-    int maxTrap = height[pos + 1];
-    for (int i = pos + 2; i < heightSize; ++i)
+  int rightMaxPos = heightSize - 1;
+  for (int i = rightMaxPos - 1; i > trapPos; --i)
+  {
+    if (height[i] > height[rightMaxPos])
+      rightMaxPos = i;
+  }
+  return rightMaxPos;
+}
+
+// Calculate the trapped water
+int trap(int *height, int heightSize)
+{
+  int trappedWater = 0, leftMaxPos = 0, trapPos = 1;
+  int rightMaxPos = findRightMaxPos(height, heightSize, trapPos);
+
+  while (trapPos < (heightSize - 1))
+  {
+    if (height[trapPos] < height[leftMaxPos] && height[trapPos] < height[rightMaxPos])
     {
-        if (height[i] > maxTrap)
-        {
-            if (height[i] >= height[pos])
-            {
-                maxTrap = height[pos];
-                break;
-            }
-            maxTrap = height[i];
-        }
+      if (height[leftMaxPos] <= height[rightMaxPos])
+      {
+        trappedWater += height[leftMaxPos] - height[trapPos];
+        height[trapPos] = height[leftMaxPos];
+      }
+      else
+      {
+        trappedWater += height[rightMaxPos] - height[trapPos];
+        height[trapPos] = height[rightMaxPos];
+      }
     }
-    return maxTrap;
+
+    ++leftMaxPos;
+    ++trapPos;
+
+    if (rightMaxPos == trapPos)
+      rightMaxPos = findRightMaxPos(height, heightSize, trapPos);
+  }
+
+  return trappedWater;
 }
 
 // Input:  [0,1,0,2,1,0,1,3,2,1,2,1]
 // Output: 6
-int trap(int *height, int heightSize)
-{
-    int trap = 0, maxTrap = 0;
-
-    for (int i = 0; (i + 1) < heightSize; ++i)
-    {
-        if (height[i] > height[i + 1] && (maxTrap = maxTrapValue(height, heightSize, i)))
-        {
-            trap += maxTrap - height[i + 1];
-            height[i + 1] = maxTrap;
-        }
-    }
-
-    return trap;
-}
-
 int main(void)
 {
-    int height[6] = {2, 0, 4, 2, 5, 2};
-    printf("Trapped water = %d", trap(height, 6));
-    return 0;
+  int height[] = {1,0,2,0,5,0,2};
+  printf("Trapped water = %d", trap(height, (sizeof height / sizeof height[0])));
+  return 0;
 }
