@@ -40,9 +40,8 @@ int trap(int *height, int heightSize)
 
   if (rightMaxPos == trapPos)
     rightMaxPos = findRightMaxPos(height, heightSize, trapPos);
-}
 
-return trappedWater;
+  return trappedWater;
 }
 
 // Input:  [0,1,0,2,1,0,1,3,2,1,2,1]
