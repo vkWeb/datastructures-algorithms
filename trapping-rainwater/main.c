@@ -48,7 +48,7 @@ int trap(int *height, int heightSize)
 // Output: 6
 int main(void)
 {
-  int height[] = {1,0,2,0,5,0,2};
+  int height[] = {1, 0, 2, 0, 5, 0, 2};
   printf("Trapped water = %d", trap(height, (sizeof height / sizeof height[0])));
   return 0;
 }
