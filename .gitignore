@@ -1,5 +1,7 @@
 # Ignore executables and object binaries
 *.exe
 *.o
+
+# Ignore VSCode debug and task configs
 .vscode/launch.json
 .vscode/tasks.json
