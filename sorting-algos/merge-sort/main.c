@@ -2,6 +2,8 @@
 
 #include <stdio.h>
 
+#define MAXARRSIZE 65536
+
 // Create two subarrays based on `first`, `mid`, `last`
 // Then merge those in ascending order into the original array
 void mergeArrs(int arr[], int first, int mid, int last)
@@ -52,26 +54,53 @@ void mergeSort(int arr[], int first, int last)
 }
 
 // Main function
-int main(void)
+int main(int argc, char *argv[])
 {
-  int arr1[] = {4, 2, 5, 1, 0, 9};
-  int arrLen = sizeof(arr1) / sizeof(arr1[0]);
-
-  printf("Before merge sort: ");
-  for (int i = 0; i < arrLen; ++i)
+  if (argc == 1)
   {
-    printf("%d ", arr1[i]);
+    fprintf(stderr, "error: no input file provided\nUsage: ./program inputfile\n");
+    return 1;
   }
-  printf("\n");
 
-  mergeSort(arr1, 1, arrLen);
+  FILE *inputFilePtr = fopen(argv[1], "r");
 
-  printf("After merge sort: ");
-  for (int i = 0; i < arrLen; ++i)
+  if (inputFilePtr == NULL)
   {
-    printf("%d ", arr1[i]);
+    fprintf(stderr, "error: can't open input file %s\n", argv[1]);
+    return 2;
   }
-  printf("\n");
 
+  int numOfArrElems;
+  int arr[MAXARRSIZE];
+
+  if (fscanf(inputFilePtr, "%d", &numOfArrElems) != 1)
+  {
+    fprintf(stderr, "error: can't read file\n");
+    return 3;
+  }
+
+  if (numOfArrElems > MAXARRSIZE)
+  {
+    fprintf(stderr, "error: number of array elements exceeded the limit of %d\n", MAXARRSIZE);
+    return 3;
+  }
+
+  for (int i = 0; i < numOfArrElems && !feof(inputFilePtr); ++i)
+  {
+    if (fscanf(inputFilePtr, "%d", &numOfArrElems) != 1)
+    {
+      fprintf(stderr, "error: can't read file\n");
+      return 3;
+    }
+  }
+
+  mergeSort(arr, 1, numOfArrElems);
+
+  for (int i = 0; i < numOfArrElems; ++i)
+  {
+    fprintf(stdout, "%d\n", arr[i]);
+  }
+
+  fclose(inputFilePtr);
   return 0;
 }
