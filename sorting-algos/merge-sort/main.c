@@ -85,12 +85,20 @@ int main(int argc, char *argv[])
     return 3;
   }
 
-  for (int i = 0; i < numOfArrElems; ++i)
+  for (int i = 0, isRead = 0; i < numOfArrElems; ++i)
   {
-    if (fscanf(inputFilePtr, "%d", &arr[i]) != 1)
+    if ((isRead = fscanf(inputFilePtr, "%d", &arr[i])) != 1)
     {
-      fprintf(stderr, "error: can't read full file, aborting.\n");
-      return 3;
+      if (isRead == EOF)
+      {
+        numOfArrElems = i;
+        break;
+      }
+      else
+      {
+        fprintf(stderr, "error: can't read full file, aborting.\n");
+        return 3;
+      }
     }
   }
 

@@ -5,3 +5,6 @@
 # Ignore VSCode debug and task configs
 .vscode/launch.json
 .vscode/tasks.json
+
+# Ignore all `main` programs
+main
