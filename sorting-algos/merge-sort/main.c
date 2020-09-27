@@ -75,14 +75,14 @@ int main(int argc, char *argv[])
 
   if (fscanf(inputFilePtr, "%d", &numOfArrElems) != 1)
   {
-    fprintf(stderr, "error: can't read file\n");
+    fprintf(stderr, "error: read failure\n");
     return 3;
   }
 
   if (numOfArrElems > MAXARRSIZE)
   {
     fprintf(stderr, "error: number of array elements exceeded the limit of %d\n", MAXARRSIZE);
-    return 3;
+    return 4;
   }
 
   for (int i = 0, isRead = 0; i < numOfArrElems; ++i)
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
       }
       else
       {
-        fprintf(stderr, "error: can't read full file, aborting.\n");
+        fprintf(stderr, "error: read failure\n");
         return 3;
       }
     }
