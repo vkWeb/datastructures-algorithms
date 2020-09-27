@@ -56,9 +56,10 @@ void mergeSort(int arr[], int first, int last)
 // Main function
 int main(int argc, char *argv[])
 {
-  if (argc == 1)
+  if (argc != 2)
   {
-    fprintf(stderr, "error: no input file provided\nUsage: ./program inputfile\n");
+    fprintf(stderr, "error: expected one file as an argument\n");
+    fprintf(stderr, "Correct usage: ./main input\n");
     return 1;
   }
 
@@ -85,20 +86,12 @@ int main(int argc, char *argv[])
     return 4;
   }
 
-  for (int i = 0, isRead = 0; i < numOfArrElems; ++i)
+  for (int i = 0; i < numOfArrElems; ++i)
   {
-    if ((isRead = fscanf(inputFilePtr, "%d", &arr[i])) != 1)
+    if (fscanf(inputFilePtr, "%d", &arr[i]) != 1)
     {
-      if (isRead == EOF)
-      {
-        numOfArrElems = i;
-        break;
-      }
-      else
-      {
-        fprintf(stderr, "error: read failure\n");
-        return 3;
-      }
+      fprintf(stderr, "error: can't read %dth element\n", i + 1);
+      return 5;
     }
   }
 
