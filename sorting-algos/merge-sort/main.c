@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
   {
     if (fscanf(inputFilePtr, "%d", &arr[i]) != 1)
     {
-      fprintf(stderr, "error: can't read %dth element\n", i + 1);
+      fprintf(stderr, "error: data not found after %d elements\n", i);
       return 5;
     }
   }
