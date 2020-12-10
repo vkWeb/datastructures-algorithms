@@ -1,8 +1,8 @@
 #include <stdio.h>
 
 /* Directives for left-child and right-child of heap at i */
-#define left(i) ((2 * i) + 1)
-#define right(i) ((2 * i) + 2)
+#define left(i) ((2 * (i)) + 1)
+#define right(i) ((2 * (i)) + 2)
 
 /* Corrects the max-heap violation at ith position */
 void maxifyHeap(int arr[], int arr_size, int i)
