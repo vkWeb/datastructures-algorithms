@@ -1,13 +1,8 @@
 #include <stdio.h>
 
-int left(int i)
-{
-    return ((2 * i) + 1);
-}
-int right(int i)
-{
-    return ((2 * i) + 2);
-}
+/* Directives for left-child and right-child of heap at i */
+#define left(i) ((2 * i) + 1)
+#define right(i) ((2 * i) + 2)
 
 /* Corrects the max-heap violation at ith position */
 void maxifyHeap(int arr[], int arr_size, int i)
@@ -15,11 +10,11 @@ void maxifyHeap(int arr[], int arr_size, int i)
     while (i < (arr_size / 2))
     {
         int largest = i;
-        if (arr[left(i)] > arr[i])
+        if (left(i) < arr_size && arr[left(i)] > arr[largest])
         {
             largest = left(i);
         }
-        if (arr[right(i)] > arr[i])
+        if (right(i) < arr_size && arr[right(i)] > arr[largest])
         {
             largest = right(i);
         }
@@ -31,6 +26,7 @@ void maxifyHeap(int arr[], int arr_size, int i)
         int temp = arr[i];
         arr[i] = arr[largest];
         arr[largest] = temp;
+
         i = largest;
     }
 }
