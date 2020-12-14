@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Maximum input size */
@@ -18,7 +19,7 @@
 #define SIGNLEN 1
 #define LINEENDDELIMLEN 1
 
-unsigned int calculateDigits(int n)
+unsigned int calculateDigits(unsigned int n)
 {
     unsigned int digits = 0;
 
@@ -31,76 +32,78 @@ unsigned int calculateDigits(int n)
     return digits;
 }
 
-unsigned int calcBytesOfCommand(int n)
+unsigned int calcBytesOfCommand(unsigned int n)
 {
     unsigned int digits = calculateDigits(n);
-    return digits + CMDLEN + DELIMLEN + SIGNLEN + LINEENDDELIMLEN;
+    return (digits + CMDLEN + DELIMLEN + SIGNLEN + LINEENDDELIMLEN);
 }
 
 /* Main function; returns accumulator */
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-    /* Check whether user provides input file */
     if (argc != 2)
     {
         fprintf(stderr, "error: expected one file as an argument\n");
-        fprintf(stderr, "Correct usage: ./main input\n");
-        return 1;
+        fprintf(stderr, "Correct usage: ./main input-file\n");
+        exit(1);
     }
 
     /* Safely open input file */
     FILE *input_file = fopen(argv[1], "r");
-    /*if (input_file == NULL)
+    if (input_file == NULL)
     {
         fprintf(stderr, "error: can't open file \"%s\"\n", argv[1]);
-        return 2;
-    }*/
-
-    /* Index file for faster IO */
-    char *command;
-    int command_argument;
-
-    unsigned int lines_read = 0;
-    unsigned int start_byte_pos_lines[MAXLINESIZE];
-    char executed_lines[MAXLINESIZE];
-    start_byte_pos_lines[0] = 0;
-    executed_lines[0] = '0';
-    while (fscanf(input_file, "%s %d", command, &command_argument) == 2)
-    {
-        ++lines_read;
-        executed_lines[lines_read] = '0';
-        start_byte_pos_lines[lines_read] = calcBytesOfCommand(command_argument);
+        exit(2);
     }
 
-    /* Scan lines and do commands */
-    printf("executed_lines[4] = %c\n", executed_lines[4]); // debug
+    /* Index file for faster IO */
+    char command[16];
+    int command_argument;
+    unsigned int lines_read = 0; /* State for lines that are read */
+
+    unsigned int start_byte_pos_lines[MAXLINESIZE]; /* Start byte pos of every line */
+    char executed_lines[MAXLINESIZE];               /* Array to initialize lines that are executed to '0' i.e. not executed */
+
+    start_byte_pos_lines[0] = 0;
+    executed_lines[0] = '0';
+    while (fgets(command, 16, input_file) != NULL)
+    {
+        sscanf(command, "%*s %d", &command_argument);
+        ++lines_read;
+        executed_lines[lines_read] = '0';
+        start_byte_pos_lines[lines_read] = start_byte_pos_lines[lines_read - 1] + calcBytesOfCommand(abs(command_argument));
+    }
+
+    // Scan lines and do commands
     int accumulator = 0;
     unsigned int current_line_index = -1;
+    fseek(input_file, 0, SEEK_SET);
 
-    printf("outside loop\n"); // debug
-
-    while (fscanf(input_file, "%s %d", command, &command_argument) == 2)
+    while (fgets(command, 16, input_file) != NULL)
     {
         ++current_line_index;
-        printf("on loop, line_index = %d\n", current_line_index); // debug
-        /* Check whether the current line has been executed */
+        printf("Read %s", command); // debug
+
+        // Check whether the current line has been executed
         if (executed_lines[current_line_index] == '1')
         {
-            printf("%d\n", accumulator); // debug
+            printf("Accumulator is: %d\n", accumulator);
             break;
         }
         else
         {
             executed_lines[current_line_index] = '1';
-            if (strcmp(command, ACC) == 0)
+            char cmd_buff[4];
+            sscanf(command, "%s %d", cmd_buff, &command_argument);
+            if (strcmp(cmd_buff, ACC) == 0)
             {
-                printf("acc %d\n", command_argument); // debug
                 accumulator += command_argument;
             }
-            else if (strcmp(command, JMP) == 0)
+            else if (strcmp(cmd_buff, JMP) == 0)
             {
-                printf("jmp %d\n", command_argument); // debug
-                fseek(input_file, start_byte_pos_lines[current_line_index + command_argument], SEEK_SET);
+                current_line_index += command_argument;
+                fseek(input_file, start_byte_pos_lines[current_line_index], SEEK_SET);
+                --current_line_index;
             }
         }
     }
