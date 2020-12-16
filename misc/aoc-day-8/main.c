@@ -2,45 +2,130 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Maximum input size */
-#define MAXLINESIZE 1024
+/*  MEMORY SAFETY ASSUMPTION:
+    JMP command's argument MUST NOT overflow the instructions.
+    Right now, this program cannot handle that situation.
+*/
+
+/* Maximum number of lines allowed in the input file */
+#define MAXINPUTSIZE 1024
 
 /* Assembly commands */
 #define ACC "acc\0"
 #define JMP "jmp\0"
 #define NOP "nop\0"
 
-/*
-    Char lengths of commands, delimiter between command & its argument,
-    + / - sign and end of line delim i.e. `\n`
-*/
+/* Byte length of a command */
 #define CMDLEN 3
-#define DELIMLEN 1
-#define SIGNLEN 1
-#define LINEENDDELIMLEN 1
 
-unsigned int calculateDigits(unsigned int n)
+/* Boot backtrack failure code */
+#define BCKTRCKFAIL -2
+
+/* Structure to store an assembly command */
+struct command
 {
-    unsigned int digits = 0;
+    char cmd[CMDLEN + 1];
+    int arg;
+    char is_run_flag;
+};
 
-    do
+/*  Read file line-wise, store command & argument in provided struct
+    set is_run_flag to '0' i.e. false.
+    Returns the number of commands read from file. */
+unsigned int indexFile(struct command cmds[], unsigned int max_cmds_size, FILE *infile)
+{
+    unsigned int i = 0;
+    char buffer[16];
+    while (i < max_cmds_size && fgets(buffer, 16, infile) != NULL)
     {
-        ++digits;
-        n = n / 10;
-    } while (n > 0);
-
-    return digits;
+        if (sscanf(buffer, "%s %d", cmds[i].cmd, &cmds[i].arg) == 2)
+        {
+            cmds[i].is_run_flag = '0';
+        }
+        else
+        {
+            fprintf(stderr, "error on indexFile: read failure from sscanf\n");
+            exit(3);
+        }
+        ++i;
+    }
+    return i;
 }
 
-unsigned int calcBytesOfCommand(unsigned int n)
+/*  Runs the assembly boot commands;
+    returns (start_index + number of operations executed before boot failure
+    or program end, whichever comes first) - 1 */
+unsigned int boot(struct command cmds[], int acc[], unsigned int cmd_seq[], unsigned int size, unsigned int start_index)
 {
-    unsigned int digits = calculateDigits(n);
-    return (digits + CMDLEN + DELIMLEN + SIGNLEN + LINEENDDELIMLEN);
+    int i = start_index;
+    int temp_acc = 0;
+    while (i < size && cmd_seq[i] < size && cmds[cmd_seq[i]].is_run_flag == '0')
+    {
+        cmd_seq[i + 1] = cmd_seq[i] + 1;
+
+        if (strcmp(cmds[cmd_seq[i]].cmd, ACC) == 0)
+        {
+            temp_acc += cmds[cmd_seq[i]].arg;
+        }
+        else if (strcmp(cmds[cmd_seq[i]].cmd, JMP) == 0)
+        {
+            cmd_seq[i + 1] = cmd_seq[i] + cmds[cmd_seq[i]].arg;
+        }
+
+        acc[i] = temp_acc;
+        cmds[cmd_seq[i]].is_run_flag = '1';
+        fprintf(stdout, "Read %s %d\n", cmds[cmd_seq[i]].cmd, cmds[cmd_seq[i]].arg); // debug
+        ++i;
+    }
+    return i - 1;
 }
 
-/* Main function; returns accumulator */
-int main(int argc, char **argv)
+/*  Update command
+    if command is NOP, change to JMP and vice versa
+    return '1' if success else '0' */
+char updateCmd(struct command cmds[], unsigned int i)
 {
+    if (strcmp(cmds[i].cmd, NOP) == 0)
+    {
+        fprintf(stdout, "%s to %s\n", cmds[i].cmd, JMP); // debug
+        strcpy(cmds[i].cmd, JMP);
+        return '1';
+    }
+    else if (strcmp(cmds[i].cmd, JMP) == 0)
+    {
+        fprintf(stdout, "%s to %s\n", cmds[i].cmd, NOP); // debug
+        strcpy(cmds[i].cmd, NOP);
+        return '1';
+    }
+    return '0';
+}
+
+/*  Backtracks boot instructions until a JMP or NOP cmd is found and updated
+    cmds being backtracked are marked as not-run
+    returns the tracker of cmd_seq array */
+signed int backtrackBoot(struct command cmds[], unsigned int cmd_seq[], unsigned int i)
+{
+    while (i >= 0)
+    {
+        cmds[cmd_seq[i]].is_run_flag = '0';
+        if (updateCmd(cmds, cmd_seq[i]) == '1')
+        {
+            break;
+        }
+        else if (i == 0)
+        {
+            i = BCKTRCKFAIL;
+            break;
+        }
+        --i;
+    }
+    return i;
+}
+
+/* Main function */
+int main(int argc, char *argv[])
+{
+    /* Check whether we have a file as an argument */
     if (argc != 2)
     {
         fprintf(stderr, "error: expected one file as an argument\n");
@@ -48,7 +133,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    /* Safely open input file */
+    /* Safely open & validate input file */
     FILE *input_file = fopen(argv[1], "r");
     if (input_file == NULL)
     {
@@ -56,58 +141,40 @@ int main(int argc, char **argv)
         exit(2);
     }
 
-    /* Index file for faster IO */
-    char command[16];
-    int command_argument;
-    unsigned int lines_read = 0; /* State for lines that are read */
+    /* Index file */
+    struct command cmds[MAXINPUTSIZE];
+    unsigned int num_of_cmds = indexFile(cmds, MAXINPUTSIZE, input_file);
 
-    unsigned int start_byte_pos_lines[MAXLINESIZE]; /* Start byte pos of every line */
-    char executed_lines[MAXLINESIZE];               /* Array to initialize lines that are executed to '0' i.e. not executed */
+    /* BOOT */
+    int accumulator[num_of_cmds];
+    unsigned int command_sequence[num_of_cmds + 1];
+    command_sequence[0] = 0;
 
-    start_byte_pos_lines[0] = 0;
-    executed_lines[0] = '0';
-    while (fgets(command, 16, input_file) != NULL)
+    int i = 0, back_i = -1;
+    i = boot(cmds, accumulator, command_sequence, num_of_cmds, 0);
+    while (command_sequence[i + 1] != num_of_cmds)
     {
-        sscanf(command, "%*s %d", &command_argument);
-        ++lines_read;
-        executed_lines[lines_read] = '0';
-        start_byte_pos_lines[lines_read] = start_byte_pos_lines[lines_read - 1] + calcBytesOfCommand(abs(command_argument));
-    }
-
-    // Scan lines and do commands
-    int accumulator = 0;
-    unsigned int current_line_index = -1;
-    fseek(input_file, 0, SEEK_SET);
-
-    while (fgets(command, 16, input_file) != NULL)
-    {
-        ++current_line_index;
-        printf("Read %s", command); // debug
-
-        // Check whether the current line has been executed
-        if (executed_lines[current_line_index] == '1')
+        /* our first backtrack will start from i */
+        if (back_i == -1)
         {
-            printf("Accumulator is: %d\n", accumulator);
-            break;
+            back_i = i;
         }
         else
         {
-            executed_lines[current_line_index] = '1';
-            char cmd_buff[4];
-            sscanf(command, "%s %d", cmd_buff, &command_argument);
-            if (strcmp(cmd_buff, ACC) == 0)
-            {
-                accumulator += command_argument;
-            }
-            else if (strcmp(cmd_buff, JMP) == 0)
-            {
-                current_line_index += command_argument;
-                fseek(input_file, start_byte_pos_lines[current_line_index], SEEK_SET);
-                --current_line_index;
-            }
+            updateCmd(cmds, command_sequence[back_i]);
         }
+
+        back_i = backtrackBoot(cmds, command_sequence, back_i);
+        if (back_i == BCKTRCKFAIL)
+        {
+            fprintf(stderr, "fail: can't correct the corrupted assembly :(\n");
+            exit(3);
+        }
+
+        i = boot(cmds, accumulator, command_sequence, num_of_cmds, back_i);
     }
 
+    fprintf(stdout, "Accumulator = %d\n", accumulator[i]); // debug
     fclose(input_file);
     return 0;
 }
