@@ -21,14 +21,12 @@ int partitionArr(int *arr, int start, int end)
 
     for (i = j = 0; j <= end; ++j)
     {
-        if (j == pivotIndex)
-        {
-            ++i;
-            continue;
-        }
-
         if (arr[j] <= arr[pivotIndex])
         {
+            if (j == pivotIndex)
+            {
+                pivotIndex = i;
+            }
             swap(arr, i, j);
             ++i;
         }
@@ -41,7 +39,7 @@ int partitionArr(int *arr, int start, int end)
 // The classical quicksort algorithm
 void quicksort(int *arr, int start, int end)
 {
-    if (start < end)
+    if (end > start)
     {
         int pivotIndex = partitionArr(arr, start, end);
         quicksort(arr, start, pivotIndex - 1);
@@ -52,7 +50,7 @@ void quicksort(int *arr, int start, int end)
 // Main function
 int main(void)
 {
-    int arr[] = {1,2,3,4,5,6,7,8,9,10,11,12,13};
+    int arr[] = {1, -2, 31, 42, 5, 6, 37, -8, 19, 100, 11, 102, -13};
     int arrLen = sizeof arr / sizeof arr[0];
 
     srand(time(NULL));
