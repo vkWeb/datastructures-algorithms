@@ -103,8 +103,13 @@ char updateCmd(struct command cmds[], unsigned int i)
 /*  Backtracks boot instructions until a JMP or NOP cmd is found and updated
     cmds being backtracked are marked as not-run
     returns the tracker of cmd_seq array */
-signed int backtrackBoot(struct command cmds[], unsigned int cmd_seq[], unsigned int i)
+signed int backtrackBoot(struct command cmds[], unsigned int cmd_seq[], unsigned int i, unsigned int first_fail_index)
 {
+    for (int first_i = first_fail_index; first_i >= i; --first_i)
+    {
+        cmds[cmd_seq[first_i]].is_run_flag = '0';
+    }
+
     while (i >= 0)
     {
         cmds[cmd_seq[i]].is_run_flag = '0';
@@ -150,8 +155,8 @@ int main(int argc, char *argv[])
     unsigned int command_sequence[num_of_cmds + 1];
     command_sequence[0] = 0;
 
-    int i = 0, back_i = -1;
-    i = boot(cmds, accumulator, command_sequence, num_of_cmds, 0);
+    int first_i = 0, i = 0, back_i = -1;
+    i = first_i = boot(cmds, accumulator, command_sequence, num_of_cmds, 0);
     while (command_sequence[i + 1] != num_of_cmds)
     {
         /* our first backtrack will start from i */
@@ -164,7 +169,7 @@ int main(int argc, char *argv[])
             updateCmd(cmds, command_sequence[back_i]);
         }
 
-        back_i = backtrackBoot(cmds, command_sequence, back_i);
+        back_i = backtrackBoot(cmds, command_sequence, back_i, first_i);
         if (back_i == BCKTRCKFAIL)
         {
             fprintf(stderr, "fail: can't correct the corrupted assembly :(\n");
