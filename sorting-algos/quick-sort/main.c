@@ -1,4 +1,6 @@
-#include <stdio.h>
+#include <stdio.h>  // For printf, NULL
+#include <time.h>   // For time
+#include <stdlib.h> // For rand, srand
 
 // Exchange elements at index `i` and `j` of array `arr`
 void swap(int *arr, int i, int j)
@@ -15,17 +17,21 @@ void swap(int *arr, int i, int j)
 int partitionArr(int *arr, int start, int end)
 {
     int pivotIndex, i, j;
-    pivotIndex = start;
-    i = j = start + 1;
+    pivotIndex = rand() % (end - start + 1);
 
-    while (j <= end)
+    for (i = j = 0; j <= end; ++j)
     {
+        if (j == pivotIndex)
+        {
+            ++i;
+            continue;
+        }
+
         if (arr[j] <= arr[pivotIndex])
         {
             swap(arr, i, j);
             ++i;
         }
-        ++j;
     }
 
     swap(arr, i - 1, pivotIndex);
@@ -35,7 +41,7 @@ int partitionArr(int *arr, int start, int end)
 // The classical quicksort algorithm
 void quicksort(int *arr, int start, int end)
 {
-    if (start > end)
+    if (start < end)
     {
         int pivotIndex = partitionArr(arr, start, end);
         quicksort(arr, start, pivotIndex - 1);
@@ -46,9 +52,10 @@ void quicksort(int *arr, int start, int end)
 // Main function
 int main(void)
 {
-    int arr[] = {13, 19, 9, 5, 12, 87, 4, 26};
+    int arr[] = {1,2,3,4,5,6,7,8,9,10,11,12,13};
     int arrLen = sizeof arr / sizeof arr[0];
 
+    srand(time(NULL));
     quicksort(arr, 0, arrLen - 1);
 
     for (int i = 0; i < arrLen; ++i)
