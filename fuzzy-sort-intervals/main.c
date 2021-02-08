@@ -90,7 +90,7 @@ void fuzzySort(struct interval *intervals, int startIndex, int endIndex)
 // Main function
 int main(void)
 {
-    struct interval intervals[] = {{2, 3}, {0, 1}, {4, 8}, {10, 10}};
+    struct interval intervals[] = {{-1, 12}, {0, 1}, {4, 8}, {10, 10}};
     int len = sizeof intervals / sizeof intervals[0];
 
     printf("BEFORE FUZZY SORTING:\n");
@@ -98,7 +98,7 @@ int main(void)
     {
         printf("%d to %d  ", intervals[i].start, intervals[i].end);
     }
-    printf("\n\n");
+    printf("\n");
 
     srand(time(NULL));
     fuzzySort(intervals, 0, len - 1);
