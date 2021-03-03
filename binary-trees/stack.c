@@ -1,19 +1,22 @@
+/* Generic Stack ADT */
+
 #include <stdio.h>  // For NULL, printfs
 #include <stdlib.h> // For malloc
 
 // Note: error handling is left to the api consumer,
-//       we gracefully report what's wrong, rest is the job of the consumer.
+//       we gracefully report what's wrong (and return NULL),
+//       rest is the job of the consumer.
 
 // Data structure for stack's node
 struct node
 {
-    void *value;
+    void *data;
     struct node *prev;
 };
 
 struct node *TOP = NULL;
 
-// Return pointer to the TOP of stack if push is successful
+// Return data of the TOP of stack if push is successful
 // Else return NULL
 void *push(void *input_data)
 {
@@ -26,12 +29,12 @@ void *push(void *input_data)
 
     new_node->prev = TOP;
     TOP = new_node;
-    new_node->value = input_data;
-    return TOP->value;
+    new_node->data = input_data;
+    return TOP->data;
 }
 
-// Pops (frees) the top of the stack and returns pointer to the new top if success
-// else returns NULL if stack if already empty
+// Pops (frees) the top of the stack and returns the data to new top upon success
+// else returns NULL if stack is already empty
 void *pop(void)
 {
     if (TOP == NULL)
@@ -42,11 +45,12 @@ void *pop(void)
     struct node *temp = TOP;
     TOP = TOP->prev;
     free(temp);
-    return TOP == NULL ? NULL : TOP->value;
+    return TOP == NULL ? NULL : TOP->data;
 }
 
-// Returns top of stack
+// Returns data of the top of stack
+// else returns NULL if stack is empty
 void *getTop(void)
 {
-    return TOP == NULL ? NULL : TOP->value;
+    return TOP == NULL ? NULL : TOP->data;
 }

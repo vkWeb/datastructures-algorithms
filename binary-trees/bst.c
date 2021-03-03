@@ -11,7 +11,8 @@ struct node
     struct node *left_child;
     struct node *right_child;
     int data;
-    bool areSubTreesTraversed;
+    bool isLeftSubtreeTraversed;
+    bool isRightSubtreeTraversed;
 };
 
 // Insert node to BST
@@ -25,6 +26,7 @@ struct node *insertNodeToBST(struct node *root, int data)
     }
 
     new_node->parent = new_node->left_child = new_node->right_child = NULL;
+    new_node->isLeftSubtreeTraversed = new_node->isRightSubtreeTraversed = false;
     new_node->data = data;
 
     if (root == NULL)
@@ -83,28 +85,29 @@ void traverseNonRecursiveWithStack(struct node *root)
         return;
     }
 
+    unsigned int num_of_iterations = 0;
     do
     {
+        ++num_of_iterations;
         struct node *nodeAtTop = (struct node *)getTop();
-        if (cursor != NULL)
+        if (cursor != NULL && cursor->isLeftSubtreeTraversed == false && cursor->isRightSubtreeTraversed == false)
         {
             push(cursor);
-            struct node *newTop = (struct node *)getTop();
-            fprintf(stdout, "%d ", newTop->data);
-            cursor = newTop->left_child;
-            // The subtree of top node hasn't been traversed yet
-            newTop->areSubTreesTraversed = false;
+            printf("%d\n", cursor->data);
+            cursor->isLeftSubtreeTraversed = true;
+            cursor = cursor->left_child;
         }
-        else if (nodeAtTop->areSubTreesTraversed == false)
+        else if (nodeAtTop->isLeftSubtreeTraversed == true && nodeAtTop->isRightSubtreeTraversed == false)
         {
+            nodeAtTop->isRightSubtreeTraversed = true;
             cursor = nodeAtTop->right_child;
-            nodeAtTop->areSubTreesTraversed = true;
         }
-        else if (nodeAtTop->areSubTreesTraversed == true)
+        else if (nodeAtTop->isLeftSubtreeTraversed == true && nodeAtTop->isRightSubtreeTraversed == true)
         {
             cursor = (struct node *)pop();
         }
-    } while (((struct node *)getTop()) != NULL);
+    } while ((struct node *)getTop() != NULL);
+    printf("Number of iterations = %d\n", num_of_iterations);
 }
 
 // Main Function
@@ -118,7 +121,10 @@ int main(void)
     root = insertNodeToBST(root, -5);
     root = insertNodeToBST(root, 3);
     root = insertNodeToBST(root, 12);
-    //traverseRecursive(root);
+    root = insertNodeToBST(root, 36);
+    root = insertNodeToBST(root, 0);
+    root = insertNodeToBST(root, 96);
+
     traverseNonRecursiveWithStack(root);
 
     printf("\n");
